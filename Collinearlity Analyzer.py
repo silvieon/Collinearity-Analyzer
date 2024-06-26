@@ -25,19 +25,18 @@ isPoint7 = True
 
 def browseFolder():
     global folder_selected
-    folder_selected = filedialog.askdirectory(initialdir=r"C:\Users\maxwe\OneDrive\Desktop")
+    folder_selected = filedialog.askdirectory(initialdir=r"c:\Users\Admin\Desktop\ATLAS\Optical Test Results")
     if folder_selected:
         files = [os.path.join(folder_selected,file) for file in os.listdir(folder_selected)]
-        sortedFiles = sorted(files)
         global file0
         global file1
         global file2
         for file in files:
-            if file.split("_")[-1]=="7-13.txt":
+            if file.split("_")[-1]=="7-13.txt" or file.split("_")[-1]=="13-7.txt":
                 file0=file
-            if file.split("_")[-1]=="3-8.txt":
+            if file.split("_")[-1]=="3-8.txt" or file.split("_")[-1]=="8-3.txt":
                 file1=file
-            if file.split("_")[-1]=="0-5.txt":
+            if file.split("_")[-1]=="0-5.txt" or file.split("_")[-1]=="5-0.txt":
                 file2=file
         file0_lbl.config(text=f"{folder_selected}")
         global staveType
