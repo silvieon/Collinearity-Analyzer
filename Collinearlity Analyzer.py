@@ -23,7 +23,7 @@ isPoint5 = True
 isPoint6 = True
 isPoint7 = True
 
-def browseFolder():
+def browseFolder(): #user selects test folder, gets test files and name/type of stave
     global folder_selected
     folder_selected = filedialog.askdirectory(initialdir=r"c:\Users\Admin\Desktop\ATLAS\Optical Test Results")
     if folder_selected:
@@ -53,7 +53,7 @@ file713_btn.grid(row=0, column=0, pady=10)
 file0_lbl = tk.Label(master = fileFrame, text="No File Selected")
 file0_lbl.grid(row=0, column=1, pady=10)
 
-def passFail(array):
+def passFail(array): #determines if stave passes or fails
     if (np.max(array)<0.1 and np.min(array) > -0.1):
         test_lbl.config(text="The Stave Core has PASSED", bg="green")
     else:
@@ -61,7 +61,7 @@ def passFail(array):
 
 
 
-def runScript():
+def runScript(): #main analyzing script
 
     if not os.path.exists(folder_selected + "\\Stave" +staveType +"_Test Results"):
         resultFolder = folder_selected + "\\Stave" +staveType +"_Test Results"
@@ -140,7 +140,7 @@ def runScript():
     f0_corrected = rigid(f0, correction01)
     f2_corrected = rigid(f2, correction12)
 
-    ax3.clear()
+    ax3.clear() #graphs and saves reconstructed stave core after stitching
     ax3.set_title("Reconstruction of Stave " + staveType + " after Stitching")
     ax3.set_xlabel("X position in mm")
     ax3.set_ylabel("Y position in mm")
@@ -176,50 +176,54 @@ def runScript():
     RotatedLpAll = ROTATE(LpAll, alpha)
 
     LpAll_re = RotatedLpAll.reshape(-1,2,2)
+    print(LpAll_re)
     LpAll_ave = np.mean(LpAll_re, axis=1)
-
     LPweight = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5, 0.5])
-    e, f = np.polyfit(LpAll_ave[:,0], LpAll_ave[:,1], 1, w = LPweight)
-
+    e, f = np.polyfit(LpAll_ave[:,0], LpAll_ave[:,1], 1, w=LPweight)
+    print(LpAll_ave)
     LpAll_ave_1 = LpAll_ave[0:2,:]
     LpAll_ave_2 = LpAll_ave[2:5,:]
     LpAll_ave_3 = LpAll_ave[5:,:]
-
-    ax2.clear()
-    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-
-    ax2.set_ylabel("Y position in mm")
-    ax2.set_xlabel("X position in mm")
-    ax2.set_title("Lockpoint positions of Stave " + staveType)
-
-    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-    ax2.grid()
-    canvas2.draw()
+    def graphRestore(): #graphs Lockpoints of Stave with Fit Line
+        ax2.clear()
+        ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
+        ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
+        ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
+        ax2.set_ylabel("Y position in mm")
+        ax2.set_xlabel("X position in mm")
+        ax2.set_title("Lockpoint positions of Stave " + staveType)
+        ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
+        ax2.grid()
+        canvas2.draw()
+    graphRestore()
     fig2.savefig(folder_selected + "\\Stave" +staveType +"_Test Results\\"+"Locking Point Positions_"+ staveType+".png")
 
+    #updating table with values of locking points in a nicer order
     tableLpx = np.array([LpAll_ave[1,0],LpAll_ave[0,0],LpAll_ave[4,0],LpAll_ave[3,0],LpAll_ave[7,0],LpAll_ave[2,0],LpAll_ave[6,0],LpAll_ave[5,0]])
     tableLpy = np.array([LpAll_ave[1,1],LpAll_ave[0,1],LpAll_ave[4,1],LpAll_ave[3,1],LpAll_ave[7,1],LpAll_ave[2,1],LpAll_ave[6,1],LpAll_ave[5,1]])
+    for point in xLabels:
+        point.config(text=f"{round(tableLpx[xLabels.index(point)]-offxD,5)}")
+    for point in yLabels:
+        point.config(text=f"{round(tableLpy[yLabels.index(point)]-offyD,5)}")
 
-    x0.config(text=f"{round(tableLpx[0]-offxD,5)}")  
-    x1.config(text=f"{round(tableLpx[1]-offxD,5)}") 
-    x2.config(text=f"{round(tableLpx[2]-offxD,5)}") 
-    x3.config(text=f"{round(tableLpx[3]-offxD,5)}") 
-    x4.config(text=f"{round(tableLpx[4]-offxD,5)}") 
-    x5.config(text=f"{round(tableLpx[5]-offxD,5)}") 
-    x6.config(text=f"{round(tableLpx[6]-offxD,5)}") 
-    x7.config(text=f"{round(tableLpx[7]-offxD,5)}") 
-    
-    y0.config(text=f"{round(tableLpy[0]-offyD,5)}") 
-    y1.config(text=f"{round(tableLpy[1]-offyD,5)}") 
-    y2.config(text=f"{round(tableLpy[2]-offyD,5)}") 
-    y3.config(text=f"{round(tableLpy[3]-offyD,5)}") 
-    y4.config(text=f"{round(tableLpy[4]-offyD,5)}") 
-    y5.config(text=f"{round(tableLpy[5]-offyD,5)}") 
-    y6.config(text=f"{round(tableLpy[6]-offyD,5)}") 
-    y7.config(text=f"{round(tableLpy[7]-offyD,5)}") 
-    def point0():
+    def graphUpdate(Lp1,Lp2,Lp3,Lp123,weight): #updates Locking Point graph with updated Locking Point Arrays
+        ax2.clear()
+        ax2.scatter(Lp1[:,0]-offxD, Lp1[:,1]-offyD);
+        ax2.scatter(Lp2[:,0]-offxD, Lp2[:,1]-offyD);
+        ax2.scatter(Lp3[:,0]-offxD, Lp3[:,1]-offyD);
+        ax2.plot(Lp123[:,0] - offxD, Lp123[:,0]*e + f - offyD, "r-" )
+        m , b = np.polyfit(Lp123[:,0], Lp123[:,1], 1, w=weight)
+        ax2.plot(Lp123[:,0] - offxD, Lp123[:,0]*m + b - offyD, "g-")
+        ax2.set_ylabel("Y position in mm")
+        ax2.set_xlabel("X position in mm")
+        ax2.set_title("Lockpoint positions of Stave " + staveType)
+        ax2.grid()
+        canvas2.draw()
+        passFail(Lp123[:,1] - Lp123[:,0]*e - f)
+        resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(Lp123[:,1] - Lp123[:,0]*e - f),5)}")
+        resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(Lp123[:,1] - Lp123[:,0]*e - f),5)}")
+
+    def point0(): #command to remove/add point0 and create new fit line
         global isPoint0
         if (not isPoint1) or (not isPoint2) or (not isPoint3) or (not isPoint4) or (not isPoint5) or (not isPoint6) or (not isPoint7):
             btn0.config(text="Remove Point?")
@@ -228,40 +232,14 @@ def runScript():
                 btn0.config(text="Add Point?")            
                 LpAll_ave_1_new = np.delete(LpAll_ave_1, 1, 0)
                 LpAll_ave_new= np.delete(LpAll_ave, 1, 0)
-                ax2.clear()
-                ax2.scatter(LpAll_ave_1_new[:,0]-offxD, LpAll_ave_1_new[:,1]-offyD);
-                ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                 LPweight_new = np.array([0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5])
-                m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
-                passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
+                graphUpdate(LpAll_ave_1_new,LpAll_ave_2, LpAll_ave_3, LpAll_ave_new, LPweight_new)
                 isPoint0 = False
             else:
                 btn0.config(text="Remove Point?")
-                ax2.clear()
-                ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
-                passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
+                graphRestore()
                 isPoint0 = True
-    def point1():
+    def point1(): #command to remove/add point1 and create fitline
         global isPoint1
         if (not isPoint0) or (not isPoint3) or (not isPoint4) or (not isPoint5) or (not isPoint6) or (not isPoint7):
             btn1.config(text="Remove Point?")
@@ -270,68 +248,26 @@ def runScript():
                 btn1.config(text="Add Point?")            
                 LpAll_ave_1_new = np.delete(LpAll_ave_1, 0, 0)
                 LpAll_ave_new= np.delete(LpAll_ave, 0, 0)
-                ax2.clear()
                 if not isPoint2:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 2, 0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 3, 0)
-                    ax2.scatter(LpAll_ave_1_new[:,0]-offxD, LpAll_ave_1_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1_new,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1_new[:,0]-offxD, LpAll_ave_1_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([1, 0.5, 0.5, 0.5, 1, 0.5, 0.5])
-                    m1 , b1 = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m1 + b1 - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1_new,LpAll_ave_2,LpAll_ave_3,LpAll_ave_new,LPweight_new)
                 isPoint1 = False
             else:
                 btn1.config(text="Remove Point?")
-                ax2.clear()
                 if not isPoint2:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 2, 0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 4, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m2 , b2 = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m2 + b2 - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint1 = True
-    def point2():
+    def point2(): #command to remove/add point2 and create fitline
         global isPoint2
         if (not isPoint0) or (not isPoint3) or (not isPoint4) or (not isPoint5) or (not isPoint6) or (not isPoint7):
             btn2.config(text="Remove Point?")
@@ -340,213 +276,86 @@ def runScript():
                 btn2.config(text="Add Point?")
                 LpAll_ave_2_new = np.delete(LpAll_ave_2, 2, 0)
                 LpAll_ave_new = np.delete(LpAll_ave, 4, 0)
-                ax2.clear()
                 if not isPoint1:
                     LpAll_ave_1_new = np.delete(LpAll_ave_1, 0, 0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 0, 0)
-                    ax2.scatter(LpAll_ave_1_new[:,0]-offxD, LpAll_ave_1_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)  
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1_new,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m1 , b1 = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m1 + b1 - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)   
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_new,LPweight_new)
                 isPoint2 = False
             else:
                 btn2.config(text="Remove Point?")
-                ax2.clear()
                 if not isPoint1:
                     LpAll_ave_1_new = np.delete(LpAll_ave_1, 0, 0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 0, 0)
-                    ax2.scatter(LpAll_ave_1_new[:,0]-offxD, LpAll_ave_1_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([1, 0.5, 0.5, 0.5, 1, 0.5, 0.5])
-                    m2 , b2 = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m2 + b2 - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1_new,LpAll_ave_2,LpAll_ave_3,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint2 = True
-    def point3():
+    def point3(): #command to remove/add point3 and create fitline
         global isPoint3
         if (not isPoint0) or (not isPoint1) or (not isPoint2) or (not isPoint5) or (not isPoint6) or (not isPoint7):
             btn3.configure(text="Remove Point?")
         else:
             if isPoint3:
                 btn3.config(text="Add Point?")
-                ax2.clear()
                 LpAll_ave_2_new = np.delete(LpAll_ave_2, 1, 0)
                 LpAll_ave_new = np.delete(LpAll_ave, 3, 0)
                 if not isPoint4:
                     LpAll_ave_3_new = np.delete(LpAll_ave_3, 2,0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 6, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3_new,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)             
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_new,LPweight_new)
                 isPoint3 = False
             else:
                 btn3.config(text="Remove Point?")
-                ax2.clear()
                 if not isPoint4:
                     LpAll_ave_3_new = np.delete(LpAll_ave_3, 2,0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 7, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2,LpAll_ave_3_new,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint3 = True
-    def point4():
+    def point4(): #command to remove/add point4 and create fitline
         global isPoint4
         if (not isPoint0) or (not isPoint1) or (not isPoint2) or (not isPoint5) or (not isPoint6) or (not isPoint7):
             btn4.config(text="Remove Point?")
         else:
             if isPoint4:
                 btn4.config(text="Add Point?")
-                ax2.clear()
                 LpAll_ave_3_new = np.delete(LpAll_ave_3, 2,0)
                 LpAll_ave_new = np.delete(LpAll_ave, 7, 0)
                 if not isPoint3:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 1,0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 3, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3_new,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2,LpAll_ave_3_new,LpAll_ave_new,LPweight_new)
                 isPoint4 = False
             else:
                 btn4.config(text="Remove Point?")
-                ax2.clear()
                 if not isPoint3:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 1,0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 3, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint4 = True
-    def point5():
+    def point5(): #command to remove/add point5 and create fitline
         global isPoint5
         if (not isPoint0) or (not isPoint1) or (not isPoint2) or (not isPoint3) or (not isPoint4) or (not isPoint7):
             btn5.config(text="Remove Point?")
         else:
-            ax2.clear()
             if isPoint5:
                 btn5.config(text="Add Point?")
                 LpAll_ave_2_new = np.delete(LpAll_ave_2, 0,0)
@@ -554,63 +363,23 @@ def runScript():
                 if not isPoint6:
                     LpAll_ave_3_new = np.delete(LpAll_ave_3, 1, 0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 5, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3_new,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_new,LPweight_new)
                 isPoint5 = False
             else:
                 btn5.config(text="Remove Point?")
                 if not isPoint6:
                     LpAll_ave_3_new = np.delete(LpAll_ave_3, 1, 0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 6, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2,LpAll_ave_3_new,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint5 = True
-    def point6():
+    def point6(): #command to remove/add point6 and create fitline
         global isPoint6
         if (not isPoint0) or (not isPoint1) or (not isPoint2) or (not isPoint3) or (not isPoint4) or (not isPoint7):
             btn6.config(text="Remove Point?")
@@ -623,63 +392,23 @@ def runScript():
                 if not isPoint5:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 0,0)
                     LpAll_ave_newer = np.delete(LpAll_ave_new, 2, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newer[:,0], LpAll_ave_newer[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newer[:,0] - offxD, LpAll_ave_newer[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newer[:,1] - LpAll_ave_newer[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3_new,LpAll_ave_newer,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5])
-                    m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2,LpAll_ave_3_new,LpAll_ave_new,LPweight_new)
                 isPoint6 = False
             else:
                 btn6.config(text="Remove Point?")
                 if not isPoint5:
                     LpAll_ave_2_new = np.delete(LpAll_ave_2, 0,0)
                     LpAll_ave_newish = np.delete(LpAll_ave, 2, 0)
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2_new[:,0]-offxD, LpAll_ave_2_new[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*e + f - offyD, "r-" )
                     LPweight_new = np.array([0.5, 1, 0.5, 0.5, 1, 0.5, 0.5])
-                    m , b = np.polyfit(LpAll_ave_newish[:,0], LpAll_ave_newish[:,1], 1, w=LPweight_new)
-                    ax2.plot(LpAll_ave_newish[:,0] - offxD, LpAll_ave_newish[:,0]*m + b - offyD, "g-")
-                    passFail(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_newish[:,1] - LpAll_ave_newish[:,0]*e - f),5)}")
+                    graphUpdate(LpAll_ave_1,LpAll_ave_2_new,LpAll_ave_3,LpAll_ave_newish,LPweight_new)
                 else:
-                    ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                    ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                    ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                    passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                    resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                    resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)              
-                ax2.grid()
-                canvas2.draw()
+                    graphRestore()
                 isPoint6 = True
-    def point7():
+    def point7(): #command to remove/add point7 and create fitline
         global isPoint7
         if (not isPoint1) or (not isPoint2) or (not isPoint3) or (not isPoint4) or (not isPoint5) or (not isPoint6) or (not isPoint0):
             btn7.config(text="Remove Point?")
@@ -688,38 +417,12 @@ def runScript():
                 btn7.config(text="Add Point?")            
                 LpAll_ave_3_new = np.delete(LpAll_ave_3, 0, 0)
                 LpAll_ave_new= np.delete(LpAll_ave, 5, 0)
-                ax2.clear()
-                ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                ax2.scatter(LpAll_ave_3_new[:,0]-offxD, LpAll_ave_3_new[:,1]-offyD);
-                ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*e + f - offyD, "r-" )
                 LPweight_new = np.array([0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5])
-                m , b = np.polyfit(LpAll_ave_new[:,0], LpAll_ave_new[:,1], 1, w=LPweight_new)
-                ax2.plot(LpAll_ave_new[:,0] - offxD, LpAll_ave_new[:,0]*m + b - offyD, "g-")
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
-                passFail(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f)
-                resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
-                resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave_new[:,1] - LpAll_ave_new[:,0]*e - f),5)}")
+                graphUpdate(LpAll_ave_1,LpAll_ave_2,LpAll_ave_3_new,LpAll_ave_new,LPweight_new)
                 isPoint7 = False
             else:
                 btn7.config(text="Remove Point?")
-                ax2.clear()
-                ax2.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1]-offyD);
-                ax2.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1]-offyD);
-                ax2.scatter(LpAll_ave_3[:,0]-offxD, LpAll_ave_3[:,1]-offyD);
-                ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
-                ax2.set_ylabel("Y position in mm")
-                ax2.set_xlabel("X position in mm")
-                ax2.set_title("Lockpoint positions of Stave " + staveType)
-                ax2.grid()
-                canvas2.draw()
-                passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-                resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
-                resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
+                graphRestore()
                 isPoint7 = True
     
     btn0.config(command=point0)
@@ -731,12 +434,12 @@ def runScript():
     btn6.config(command=point6)
     btn7.config(command=point7)
     
-
+    #displays max/min residual values
     resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
     resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
     lpFidMax_lbl.config(text="Max distance from LP to Fiducial Regression (in mm): " + f"{round(RotatedLpAll[15,0]*e + f - offyD,5)}")
     lpFidMin_lbl.config(text="Min distance from LP to Fiducial Regression (in mm): " + f"{round(RotatedLpAll[0,0]*e + f - offyD,5)}")
-    
+    #graphs Residuals of Lockpoints
     ax.clear()
     ax.scatter(LpAll_ave_1[:,0]-offxD, LpAll_ave_1[:,1] - LpAll_ave_1[:,0]*e - f)
     ax.scatter(LpAll_ave_2[:,0]-offxD, LpAll_ave_2[:,1] - LpAll_ave_2[:,0]*e - f)
@@ -750,23 +453,26 @@ def runScript():
     fig.savefig(folder_selected + "\\Stave" +staveType +"_Test Results\\"+"Locking Point Residuals_"+ staveType+".png")
 
     passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
-    
-    
-
+    #saves residuals, lockingpoints, and fit curves as a csv
     xColumn = tableLpx-offxD
     yColumn = tableLpy-offyD
-
     for i in range(8):
         xColumn[i]=round(xColumn[i],5)
         yColumn[i]=round(yColumn[i],5)
-
-    #saveTable = np.stack((xColumn,yColumn), axis=-1)
-
+    fitList = np.array([(tableLpx[:]*e+f)-offyD]).flatten()
+    fitList1 = np.round(fitList, 5)
     resList = np.array([tableLpy[:]-tableLpx[:]*e - f]).flatten()
     resList1 = np.round(resList, 5)
-    df = pd.DataFrame({"Locking Point X (mm)": xColumn, "Locking Point Y (mm)": yColumn, "Residuals for Stave " + staveType: resList1})
+    resList2 = 1000*resList1
+    er = round(e,9)
+    fr = round(f,5)
+    df = pd.DataFrame({"LP X (mm)": xColumn, "LP Y (mm)": yColumn, "Y Fit":fitList1, "Residuals": resList2, "Slope":er, "Intercept":fr})
     df.to_csv(folder_selected + "\\Stave" +staveType +"_Test Results\\"+"LockingPoints_"+ staveType+".csv", index=False)
 
+    slope_lbl.config(text="Slope of Linear Fit of Locking Points: " + f"{er}")
+    intercept_lbl.config(text="Intercept of Linear Fit of Locking Points: " + f"{fr}")
+
+#last section is initializing GUI elements
 btnFrame = tk.Frame(master=window)
 btnFrame.pack()
 run_btn = tk.Button(master=btnFrame, text="Run Analysis", command=runScript, font=18)
@@ -820,56 +526,41 @@ x_lbl.grid(row=0,column=0)
 y_lbl = tk.Label(master=tableFrame, text="Y value in mm", font=18)
 y_lbl.grid(row=0, column=1)
 
-x0 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x0.grid(row=1, column=0)    
+x0 = tk.Label(master=tableFrame, text=f"0", font= 18)  
 x1 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x1.grid(row=2, column=0)
 x2 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x2.grid(row=3, column=0)
 x3 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x3.grid(row=4, column=0)
 x4 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x4.grid(row=5, column=0)
 x5 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x5.grid(row=6, column=0)
 x6 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x6.grid(row=7, column=0)
 x7 = tk.Label(master=tableFrame, text=f"0", font= 18)
-x7.grid(row=8, column=0)
-   
+xLabels = [x0,x1,x2,x3,x4,x5,x6,x7]
+for point in xLabels:
+    point.grid(row=xLabels.index(point)+1,column=0)
+
 y0 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y0.grid(row=1, column=1)
 y1 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y1.grid(row=2, column=1)
 y2 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y2.grid(row=3, column=1)
 y3 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y3.grid(row=4, column=1)
 y4 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y4.grid(row=5, column=1)
 y5 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y5.grid(row=6, column=1)
 y6 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y6.grid(row=7, column=1)
 y7 = tk.Label(master=tableFrame, text=f"0", font= 18)
-y7.grid(row=8, column=1)
+yLabels = [y0,y1,y2,y3,y4,y5,y6,y7]
+for point in yLabels:
+    point.grid(row=yLabels.index(point)+1,column=1)
 
 btn0 = tk.Button(master=tableFrame, text="Remove Point?", bg="#F55447")
-btn0.grid(row=1,column=2)
 btn1 = tk.Button(master=tableFrame, text="Remove Point?", bg="orange")
-btn1.grid(row=2,column=2)
 btn2 = tk.Button(master=tableFrame, text="Remove Point?", bg="orange")
-btn2.grid(row=3,column=2)
 btn3 = tk.Button(master=tableFrame, text="Remove Point?", bg="yellow")
-btn3.grid(row=4,column=2)
 btn4 = tk.Button(master=tableFrame, text="Remove Point?", bg="yellow")
-btn4.grid(row=5,column=2)
 btn5 = tk.Button(master=tableFrame, text="Remove Point?", bg="#50F97C")
-btn5.grid(row=6,column=2)
 btn6 = tk.Button(master=tableFrame, text="Remove Point?", bg="#50F97C")
-btn6.grid(row=7,column=2)
 btn7 = tk.Button(master=tableFrame, text="Remove Point?", bg="#7ED2F6")
-btn7.grid(row=8,column=2)
+btnArray = [btn0,btn1,btn2,btn3,btn4,btn5,btn6,btn7]
+for btn in btnArray:
+    btn.grid(row=btnArray.index(btn)+1,column=2)
 
 resMax_lbl = tk.Label(master=tableFrame, text="Max Residual Value (in mm): ",font=18)
 resMax_lbl.grid(row=1, column=3, padx=40)
@@ -879,8 +570,9 @@ lpFidMax_lbl = tk.Label(master=tableFrame, text="Max distance from LP to Fiducia
 lpFidMax_lbl.grid(row=3, column=3, padx=40)
 lpFidMin_lbl = tk.Label(master=tableFrame, text="Min distance from LP to Fiducial Regression (in mm): ", font=18)
 lpFidMin_lbl.grid(row=4, column=3, padx=40)
+slope_lbl = tk.Label(master=tableFrame, text="Slope of Linear Fit of Locking Points: ", font = 18)
+slope_lbl.grid(row=5, column= 3, padx=40)
+intercept_lbl = tk.Label(master=tableFrame, text="Intercept of Linear Fit of Locking Points: ", font=18)
+intercept_lbl.grid(row=6, column=3, padx=40)
 
-
-compValue = 13.891
-#Add linear fit on removing graph, save locking points as text file
 window.mainloop()
