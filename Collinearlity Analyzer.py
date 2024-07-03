@@ -25,7 +25,7 @@ isPoint7 = True
 
 def browseFolder(): #user selects test folder, gets test files and name/type of stave
     global folder_selected
-    folder_selected = filedialog.askdirectory(initialdir=r"c:\Users\Admin\Desktop\ATLAS\Optical Test Results")
+    folder_selected = filedialog.askdirectory(initialdir=r"c:\Users\Admin\Desktop\ATLAS RESULTS\Optical Test Results")
     if folder_selected:
         files = [os.path.join(folder_selected,file) for file in os.listdir(folder_selected)]
         global file0
@@ -66,7 +66,7 @@ def runScript(): #main analyzing script
     if not os.path.exists(folder_selected + "\\Stave" +staveType +"_Test Results"):
         resultFolder = folder_selected + "\\Stave" +staveType +"_Test Results"
         os.mkdir(resultFolder)
-
+    #loading files and organizing data
     f0 = np.loadtxt(file0, skiprows=7, usecols=(2,3))
     f0 = np.concatenate([[[0,0]],f0], axis=0)
 
@@ -122,7 +122,7 @@ def runScript(): #main analyzing script
 
     allpoints11 = np.concatenate([fiducials11, lockpoints11])
     allpoints12 = np.concatenate([fiducials12, lockpoints12])
-    def rigid(points, params):
+    def rigid(points, params): #performs a rigid transformation of fiducials/locking points so they can be stitched
         theta, *d = params
         d = np.array(d)
     
@@ -174,13 +174,12 @@ def runScript(): #main analyzing script
 
     LpAll= np.concatenate([f0_corrected[LPidxs0], f1[LPidxs1], f2_corrected[LPidxs2]], axis=0)
     RotatedLpAll = ROTATE(LpAll, alpha)
-
+    #finds the linear fit of stitched locking points
     LpAll_re = RotatedLpAll.reshape(-1,2,2)
-    print(LpAll_re)
     LpAll_ave = np.mean(LpAll_re, axis=1)
-    LPweight = np.array([0.5, 1, 0.5, 0.5, 0.5, 1, 0.5, 0.5])
-    e, f = np.polyfit(LpAll_ave[:,0], LpAll_ave[:,1], 1, w=LPweight)
-    print(LpAll_ave)
+    LpxArray = np.array([LpAll_ave[1,0],(LpAll_ave[0,0]+LpAll_ave[4,0])/2,(LpAll_ave[3,0]+LpAll_ave[7,0])/2,(LpAll_ave[2,0]+LpAll_ave[6,0])/2,LpAll_ave[5,0]])
+    LpyArray = np.array([LpAll_ave[1,1],(LpAll_ave[0,1]+LpAll_ave[4,1])/2,(LpAll_ave[3,1]+LpAll_ave[7,1])/2,(LpAll_ave[2,1]+LpAll_ave[6,1])/2,LpAll_ave[5,1]])
+    e, f = np.polyfit(LpxArray[:],LpyArray[:],1)
     LpAll_ave_1 = LpAll_ave[0:2,:]
     LpAll_ave_2 = LpAll_ave[2:5,:]
     LpAll_ave_3 = LpAll_ave[5:,:]
@@ -195,10 +194,14 @@ def runScript(): #main analyzing script
         ax2.plot(LpAll_ave[:,0] - offxD, LpAll_ave[:,0]*e + f - offyD, "r-" )
         ax2.grid()
         canvas2.draw()
+        resMax_lbl.config(text="Max Residual Value (in mm): " + f"{round(np.max(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
+        resMin_lbl.config(text="Min Residual Value (in mm): " + f"{round(np.min(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f),5)}")
+        passFail(LpAll_ave[:,1] - LpAll_ave[:,0]*e - f)
+
     graphRestore()
     fig2.savefig(folder_selected + "\\Stave" +staveType +"_Test Results\\"+"Locking Point Positions_"+ staveType+".png")
 
-    #updating table with values of locking points in a nicer order
+    #updating table with values of locking points in a sorted order
     tableLpx = np.array([LpAll_ave[1,0],LpAll_ave[0,0],LpAll_ave[4,0],LpAll_ave[3,0],LpAll_ave[7,0],LpAll_ave[2,0],LpAll_ave[6,0],LpAll_ave[5,0]])
     tableLpy = np.array([LpAll_ave[1,1],LpAll_ave[0,1],LpAll_ave[4,1],LpAll_ave[3,1],LpAll_ave[7,1],LpAll_ave[2,1],LpAll_ave[6,1],LpAll_ave[5,1]])
     for point in xLabels:
@@ -466,7 +469,7 @@ def runScript(): #main analyzing script
     resList2 = 1000*resList1
     er = round(e,9)
     fr = round(f,5)
-    df = pd.DataFrame({"LP X (mm)": xColumn, "LP Y (mm)": yColumn, "Y Fit":fitList1, "Residuals": resList2, "Slope":er, "Intercept":fr})
+    df = pd.DataFrame({"LP X (mm)": xColumn, "LP Y (mm)": yColumn, "Y Fit":fitList1, "Residuals": resList2, "Slope":er, "Intercept":fr, "X":tableLpx, "Y":tableLpy})
     df.to_csv(folder_selected + "\\Stave" +staveType +"_Test Results\\"+"LockingPoints_"+ staveType+".csv", index=False)
 
     slope_lbl.config(text="Slope of Linear Fit of Locking Points: " + f"{er}")
